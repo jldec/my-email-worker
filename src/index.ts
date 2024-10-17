@@ -2,11 +2,13 @@ import { EmailMessage } from 'cloudflare:email'
 import { createMimeMessage } from 'mimetext'
 import PostalMime from 'postal-mime'
 
+const workerAddress = 'test-email-worker@jldec.fun'
+
 export default {
   async email(message, env, ctx) {
     console.log(`Received email from ${message.from}`)
 
-    // parse for attachments - see readme for additional options
+    // parse for attachments - see postal-mime for additional options
     // https://github.com/postalsys/postal-mime/tree/master?tab=readme-ov-file#postalmimeparse
     const email = await PostalMime.parse(message.raw)
     email.attachments.forEach((a) => {
@@ -17,25 +19,22 @@ export default {
       }
     })
 
-    // reply to sender
+    // reply to sender must include in-reply-to with message ID
     // https://developers.cloudflare.com/email-routing/email-workers/reply-email-workers/
     const messageId = message.headers.get('Message-ID')
     if (messageId) {
-      console.log(`Replying to sender with message id:${messageId}`)
+      console.log(`Replying to ${message.from} with message ID ${messageId}`)
       const msg = createMimeMessage()
       msg.setHeader('In-Reply-To', messageId)
-      msg.setHeader('From', 'test-email-worker@jldec.fun')
-      msg.setSender('test-email-worker@jldec.me')
+      msg.setSender(workerAddress)
       msg.setRecipient(message.from)
-      msg.setSubject('test-email-worker auto reply')
+      msg.setSubject('Auto-reply')
       msg.addMessage({
         contentType: 'text/plain',
-        data: `Thanks for your message!`
+        data: `Thanks for the message`
       })
-
-      ctx.waitUntil(
-        message.reply(new EmailMessage('test-email-worker@jldec.fun', message.from, msg.asRaw()))
-      )
+      const replyMessage = new EmailMessage(workerAddress, message.from, msg.asRaw())
+      ctx.waitUntil(message.reply(replyMessage))
     }
 
     ctx.waitUntil(message.forward('jurgen@haydnlabs.com'))
