@@ -1,3 +1,18 @@
+/**
+ * Welcome to Cloudflare Workers!
+ *
+ * This is a template for an Email Worker: a worker that is triggered by an incoming email.
+ * https://developers.cloudflare.com/email-routing/email-workers/
+ *
+ * - The wrangler development server is not enabled to run email workers locally.
+ * - Run `pnpm ship` to publish your worker
+ *
+ * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
+ * `Env` object can be regenerated with `pnpm cf-typegen`.
+ *
+ * Learn more at https://developers.cloudflare.com/workers/
+ */
+
 import { EmailMessage } from 'cloudflare:email'
 import { createMimeMessage } from 'mimetext'
 import PostalMime from 'postal-mime'
