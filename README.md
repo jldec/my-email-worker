@@ -26,7 +26,7 @@ The steps below assume that you have a domain name and are using Cloudflare to m
 
 ## 3. Deploy the Worker with Wrangler
 
-[wrangler](https://developers.cloudflare.com/workers/wrangler/) will allow you to configure the worker with persisted logs, and can run builds with Typescript and 3rd-party npm packages.
+[wrangler](https://developers.cloudflare.com/workers/wrangler/) will allow you to configure the worker to persist logs, and can run builds with TypeScript and 3rd-party npm packages.
 
 To make this easier, I created a starter project at [github.com/jldec/my-email-worker](https://github.com/jldec/my-email-worker) with logging enabled.
 
