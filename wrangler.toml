@@ -6,3 +6,7 @@ compatibility_flags = [ "nodejs_compat" ]
 
 [observability]
 enabled = true
+
+[vars]
+EMAIL_WORKER_ADDRESS = "my-email-worker@jldec.fun"
+EMAIL_FORWARD_ADDRESS = "jurgen@jldec.me"

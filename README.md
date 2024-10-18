@@ -28,19 +28,81 @@ The steps below assume that you have a domain name and are using Cloudflare to m
 
 [wrangler](https://developers.cloudflare.com/workers/wrangler/) will allow you to configure the worker with persisted logs, and can run builds with Typescript and 3rd-party npm packages.
 
-I created this starter repo [on GitHub](https://github.com/jldec/my-email-worker) which has logging enabled, and uses [postal-mime](https://github.com/postalsys/postal-mime#readme) to parse raw emails for attachments.
+To make this easier, I created a starter project at [github.com/jldec/my-email-worker](https://github.com/jldec/my-email-worker) with logging enabled.
 
-wrangler.toml
+The example uses [postal-mime](https://github.com/postalsys/postal-mime#readme) to parse attachments, and [mime-text](https://github.com/muratgozel/MIMEText) to generate a reply. The latter requires `nodejs_compat` in wrangler.toml.
+
+### wrangler.toml
 ```toml
 #:schema node_modules/wrangler/config-schema.json
 name = "my-email-worker"
 main = "src/index.ts"
 compatibility_date = "2024-10-11"
+compatibility_flags = [ "nodejs_compat" ]
 
 [observability]
 enabled = true
+
+[vars]
+EMAIL_WORKER_ADDRESS = "my-email-worker@jldec.fun"
+EMAIL_FORWARD_ADDRESS = "jurgen@jldec.me"
 ```
 
-### Here are the persisted logs from the Cloudflare dashboard. 🎉
+### src/index.ts
+```ts
+/**
+ * Welcome to Cloudflare Workers!
+ *
+ * This is a template for an Email Worker: a worker that is triggered by an incoming email.
+ * https://developers.cloudflare.com/email-routing/email-workers/
+ *
+ * - The wrangler development server is not enabled to run email workers locally.
+ * - Run `pnpm ship` to publish your worker
+ *
+ * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
+ * `Env` object can be regenerated with `pnpm cf-typegen`.
+ *
+ * Learn more at https://developers.cloudflare.com/workers/
+ */
 
-![cf-email-worker-persisted-logs](https://github.com/user-attachments/assets/8a92e303-25d9-49ef-b573-86787b000331)
+import { EmailMessage } from 'cloudflare:email'
+import { createMimeMessage } from 'mimetext'
+import PostalMime from 'postal-mime'
+
+export default {
+  email: async (message, env, ctx) => {
+    console.log(`Received email from ${message.from}`)
+
+    // parse for attachments - see postal-mime for additional options
+    // https://github.com/postalsys/postal-mime/tree/master?tab=readme-ov-file#postalmimeparse
+    const email = await PostalMime.parse(message.raw)
+    email.attachments.forEach((a) => {
+      if (a.mimeType === 'application/json') {
+        const jsonString = new TextDecoder().decode(a.content)
+        const jsonValue = JSON.parse(jsonString)
+        console.log(`JSON attachment value:\n${JSON.stringify(jsonValue, null, 2)}`)
+      }
+    })
+
+    // reply to sender must include in-reply-to with message ID
+    // https://developers.cloudflare.com/email-routing/email-workers/reply-email-workers/
+    const messageId = message.headers.get('message-id')
+    if (messageId) {
+      console.log(`Replying to ${message.from} with message ID ${messageId}`)
+      const msg = createMimeMessage()
+      msg.setHeader('in-reply-to', messageId)
+      msg.setSender(env.EMAIL_WORKER_ADDRESS)
+      msg.setRecipient(message.from)
+      msg.setSubject('Auto-reply')
+      msg.addMessage({
+        contentType: 'text/plain',
+        data: `Thanks for the message`
+      })
+      const replyMessage = new EmailMessage(env.EMAIL_WORKER_ADDRESS, message.from, msg.asRaw())
+      ctx.waitUntil(message.reply(replyMessage))
+    }
+
+    ctx.waitUntil(message.forward(env.EMAIL_FORWARD_ADDRESS))
+  }
+} satisfies ExportedHandler<Env>
+```
