@@ -30,7 +30,9 @@ The steps below assume that you have a domain name and are using Cloudflare to m
 
 To make this easier, I created a starter project at [github.com/jldec/my-email-worker](https://github.com/jldec/my-email-worker) with logging enabled.
 
-The example uses [postal-mime](https://github.com/postalsys/postal-mime#readme) to parse attachments, and [mime-text](https://github.com/muratgozel/MIMEText) to generate a reply. The latter requires `nodejs_compat` in wrangler.toml.
+The sample uses [postal-mime](https://github.com/postalsys/postal-mime#readme) to parse attachments, and [mime-text](https://github.com/muratgozel/MIMEText) to generate a reply. The `mime-text` package requires `nodejs_compat` in wrangler.toml.
+
+To download the starter, run `pnpm create cloudflare --template github:jldec/my-email-worker`.
 
 ### wrangler.toml
 ```toml
