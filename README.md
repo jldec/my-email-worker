@@ -106,3 +106,58 @@ export default {
   }
 } satisfies ExportedHandler<Env>
 ```
+
+
+## 4. Add POST handler to send emails
+
+For a worker to send emails from a fetch handler, you need a `send_email` [binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/#what-is-a-binding) in `wrangler.toml`. E.g.
+
+```toml
+[[send_email]]
+name = "SEND_EMAIL"
+```
+
+The binding `name` is required to expose `env.<NAME>.send()` in the worker.
+
+Additional binding [values](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/#types-of-bindings) for `destination_address` or `allowed_destination_addresses` are optional.
+
+Run `wrangler types` to add the new binding to the `Env` interface in `worker-configuration.d.ts`.
+
+For the binding to work, the `from` address must match a configured [custom address](https://developers.cloudflare.com/email-routing/setup/email-routing-addresses/#custom-addresses), and the `to` address must match a configured [destination address](https://developers.cloudflare.com/email-routing/setup/email-routing-addresses/#destination-addresses). The [docs](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/) are little unclear about this, but this is how I got it to work.
+
+The example below does not protect against CSRF or other abuse, and handles text only.
+
+```ts
+  // Send email in respose to a POST request
+  // TODO: Add CSRF and other protections against abuse
+  // https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/#example-worker
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('Method Not Allowed', { status: 405 })
+    }
+    const msg = createMimeMessage()
+    msg.setSender(env.EMAIL_WORKER_ADDRESS)
+    msg.setRecipient(env.EMAIL_FORWARD_ADDRESS)
+    msg.setSubject('Worker POST')
+    msg.addMessage({
+      contentType: 'text/plain',
+      data: (await request.text()) ?? 'No body'
+    })
+
+    var message = new EmailMessage(env.EMAIL_WORKER_ADDRESS, env.EMAIL_FORWARD_ADDRESS, msg.asRaw())
+    try {
+      await env.SEND_EMAIL.send(message)
+    } catch (e) {
+      return new Response((e as Error).message)
+    }
+
+    return new Response('OK')
+  }
+```
+
+Test with a curl request and look for the email in your inbox.
+```sh
+$ curl https://my-email-worker.jldec.workers.dev/ -d 'hello worker'
+OK
+```
+> 💌 You've got mail.
