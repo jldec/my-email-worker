@@ -51,5 +51,31 @@ export default {
     }
 
     ctx.waitUntil(message.forward(env.EMAIL_FORWARD_ADDRESS))
+  },
+
+  // Send email in respose to a POST request
+  // TODO: Add CSRF and other protections against abuse
+  // https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/#example-worker
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('Method Not Allowed', { status: 405 })
+    }
+    const msg = createMimeMessage()
+    msg.setSender(env.EMAIL_WORKER_ADDRESS)
+    msg.setRecipient(env.EMAIL_FORWARD_ADDRESS)
+    msg.setSubject('Worker POST')
+    msg.addMessage({
+      contentType: 'text/plain',
+      data: (await request.text()) ?? 'No body'
+    })
+
+    var message = new EmailMessage(env.EMAIL_WORKER_ADDRESS, env.EMAIL_FORWARD_ADDRESS, msg.asRaw())
+    try {
+      await env.SEND_EMAIL.send(message)
+    } catch (e) {
+      return new Response((e as Error).message)
+    }
+
+    return new Response('OK')
   }
 } satisfies ExportedHandler<Env>

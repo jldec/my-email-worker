@@ -3,4 +3,5 @@
 interface Env {
 	EMAIL_WORKER_ADDRESS: "my-email-worker@jldec.fun";
 	EMAIL_FORWARD_ADDRESS: "jurgen@jldec.me";
+	SEND_EMAIL: SendEmail;
 }
