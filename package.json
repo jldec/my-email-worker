@@ -5,7 +5,7 @@
   "scripts": {
     "ship": "wrangler deploy",
     "dev": "wrangler dev",
-    "cf-typegen": "wrangler types"
+    "types": "wrangler types"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241011.0",
