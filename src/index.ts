@@ -54,7 +54,7 @@ export default {
   },
 
   // Send email in respose to a POST request
-  // TODO: Add CSRF and other protections against abuse
+  // TODO: CSRF protection, CORS headers, handle form data encoding
   // https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/#example-worker
   async fetch(request, env) {
     if (request.method !== 'POST') {
