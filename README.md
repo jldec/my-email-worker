@@ -7,7 +7,7 @@ If all you want to do is forward emails, you can do this without a worker, but w
 
 The steps below assume that you have a domain name and are using Cloudflare to manage [DNS](https://www.cloudflare.com/learning/dns/dns-records/). They also assume that the domain is not already configured for another email provider.
 
-## Enable email routing on your domain
+## 1. Enable email routing on your domain
 
 - Go to `Websites` in your Cloudflare [dashboard](https://dash.cloudflare.com/zones) and select the domain for which you're enabling email (I'm using `jldec.fun`).
 - Look for `Email > Email Routing` and click the `Get started` button.
@@ -15,7 +15,7 @@ The steps below assume that you have a domain name and are using Cloudflare to m
 - After verifying the forwarding address, confirm the DNS changes.
 - Once the DNS changes are done, your first routing rules will take effect.
 
-## Create an email Worker
+## 2. Create an email Worker
 
 - Go to the `Email Workers` tab, and cick the `Create` button.`
 - Choose the `Allowlist senders` starter.
